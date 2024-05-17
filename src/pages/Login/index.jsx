@@ -1,10 +1,18 @@
-import { Button, Card, Form, Input } from "antd";
+import { Button, Card, Form, Input, message } from "antd";
 import "./index.scss";
 import logo from "@/assets/logo.png";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { doLogin } from "@/store/user";
 
 const Login = () => {
-  const onFinish = (formValue) => {
-    console.log(formValue);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const onFinish = async (formValue) => {
+    await dispatch(doLogin(formValue));
+    navigate("/");
+    message.success("登录成功");
   };
 
   return (
@@ -36,7 +44,7 @@ const Login = () => {
               },
             ]}
           >
-            <Input size="large" placeholder="请输入验证码" maxLength={6} />
+            <Input size="large" placeholder="请输入验证码" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" size="large" block>
