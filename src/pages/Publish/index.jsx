@@ -16,7 +16,7 @@ import { Option } from "antd/es/mentions";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useEffect, useRef, useState } from "react";
-import { getChannels, publishArticle } from "../apis/article";
+import { getChannels, publishArticle } from "../../apis/article";
 import { PlusOutlined } from "@ant-design/icons";
 
 const Publish = () => {

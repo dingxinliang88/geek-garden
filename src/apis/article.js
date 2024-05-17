@@ -8,3 +8,12 @@ export const getChannels = async () => {
 export const publishArticle = async (params) => {
   await http.post("/mp/articles?draft=false", params);
 };
+
+export const getArticle = async (params) => {
+  const res = await http.get("/mp/articles", { params });
+  return res;
+};
+
+export const delArticle = async (articleId) => {
+  await http.delete(`/mp/articles/${articleId}`);
+};
