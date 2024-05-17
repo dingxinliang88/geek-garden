@@ -11,12 +11,17 @@ import {
   message,
 } from "antd";
 import "./index.scss";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Option } from "antd/es/mentions";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useEffect, useRef, useState } from "react";
-import { getChannels, publishArticle } from "../../apis/article";
+import {
+  getArticleById,
+  getChannels,
+  publishArticle,
+  updateArticle,
+} from "../../apis/article";
 import { PlusOutlined } from "@ant-design/icons";
 
 const Publish = () => {
@@ -27,6 +32,33 @@ const Publish = () => {
   const [imageType, setImageType] = useState(0);
   const cacheImageList = useRef([]);
 
+  const [searchParams] = useSearchParams();
+  const articleId = searchParams.get("id");
+  const [form] = Form.useForm();
+
+  /**
+   * 回显数据
+   */
+  useEffect(() => {
+    // 1. 通过id获取数据
+    async function getArticleDetail() {
+      const res = await getArticleById(articleId);
+      const data = res.data;
+      const { cover } = data;
+      form.setFieldsValue({ ...data, type: cover.type });
+      setImageType(cover.type);
+      setImageList(
+        cover.images.map((url) => {
+          return { url };
+        })
+      );
+    }
+    // 只有有id的时候才能调用此函数回填
+    if (articleId) {
+      getArticleDetail();
+    }
+  }, [articleId, form]);
+
   useEffect(() => {
     async function getChannelsData() {
       const res = await getChannels();
@@ -36,6 +68,15 @@ const Publish = () => {
   }, []);
 
   const onFinish = async (formValue) => {
+    const formatUrl = (list) => {
+      return list.map((item) => {
+        if (item.response) {
+          return item.response.data.url;
+        } else {
+          return item.url;
+        }
+      });
+    };
     if (imageType !== imageList.length) return message.error("图片不合法");
     const { channel_id, content, title } = formValue;
     const params = {
@@ -45,11 +86,17 @@ const Publish = () => {
       type: imageType,
       cover: {
         type: imageType,
-        images: imageList.map((item) => item.response.data.url),
+        images: formatUrl(imageList),
       },
     };
-    await publishArticle(params);
-    message.success("发布文章成功");
+    if (articleId) {
+      // 编辑文章
+      await updateArticle(articleId, params);
+    } else {
+      // 新增文章
+      await publishArticle(params);
+    }
+    message.success(`${articleId ? "编辑" : "发布"}文章成功`);
     navigate("/");
   };
 
@@ -94,7 +141,7 @@ const Publish = () => {
                 title: <Link to={"/"}>首页</Link>,
               },
               {
-                title: "发布文章",
+                title: `${articleId ? "编辑" : "发布"}文章`,
               },
             ]}
           />
@@ -105,6 +152,7 @@ const Publish = () => {
           wrapperCol={{ span: 16 }}
           initialValues={{ type: 1 }}
           onFinish={onFinish}
+          form={form}
         >
           <Form.Item
             label="标题"
@@ -178,7 +226,7 @@ const Publish = () => {
           <Form.Item wrapperCol={{ offset: 4 }}>
             <Space>
               <Button size="large" type="primary" htmlType="submit">
-                发布文章
+                {articleId ? "更新文章" : "发布文章"}
               </Button>
             </Space>
           </Form.Item>
